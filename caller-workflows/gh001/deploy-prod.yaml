@@ -1,0 +1,18 @@
+name: deploy-prod
+
+on:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  deploy-prod:
+    permissions: 
+      id-token: write
+      contents: write
+    uses: ./.github/workflows/deploy-prod-reusable.yaml
+    with:
+      oidc_role: arn:aws:iam::402086157955:role/c201-github-oidc-role
+      region: eu-west-1
+      terraform_dir: "${GITHUB_WORKSPACE}/terraform/app/eu-west-1/test-api/"
+    secrets: inherit

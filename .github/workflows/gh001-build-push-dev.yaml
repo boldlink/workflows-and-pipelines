@@ -1,0 +1,99 @@
+name: build-push-dev
+
+on:
+  workflow_call:
+    inputs:
+      oidc_role:
+        required: true
+        type: string
+      region:
+        required: true
+        type: string
+      terraform_dir:
+        type: string
+        required: true
+      ecr_repo_name:
+        type: string
+        required: true
+
+env:
+  ENV: 'dev'
+  TF_VER: '0.14.11'
+
+jobs:
+  build_push:
+    runs-on: self-hosted
+    environment: dev
+    permissions: 
+      id-token: write
+      contents: write
+    steps:
+      - uses: actions/checkout@v3
+        name: checkout repo code 
+        with:
+          ref: ${{ github.event.base_ref }} 
+   
+      - name: Query account ID
+        id: query-account
+        run: |
+          echo "account=$(aws sts get-caller-identity --query "Account" --output text)" >> $GITHUB_OUTPUT
+
+      - name: Docker build
+        id: tag-image
+        run: |
+          aws ecr get-login-password --region ${{ inputs.region }}  | docker login --username AWS --password-stdin ${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com
+          docker build -t ${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ inputs.ecr_repo_name }}:${{ github.ref_name }} .
+          echo "image=${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ inputs.ecr_repo_name }}:${{ github.ref_name }}" >> $GITHUB_OUTPUT
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.tag-image.outputs.image }}
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+      - name: Docker push
+        id: push-image
+        run: |
+          docker push ${{ steps.tag-image.outputs.image }}
+
+      - name: Configure AWS credentials for dev ENV
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ inputs.oidc_role }}
+          aws-region: ${{ inputs.region }}
+
+      - name: Confirm logged in user
+        run: |
+          aws sts get-caller-identity
+
+      - name: setup nodejs
+        uses: actions/setup-node@v3
+        with:
+          node-version: "14"
+  
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${TF_VER}
+  
+      - name: Terraform apply
+        run: |
+            cd ${{inputs.terraform_dir}}
+            sed -i 's/^image_release = .*/image_release = "${{ github.ref_name }}"/' ./env/${ENV}.tfvars
+            terraform init -backend-config=./env/${ENV}-backend.hcl -reconfigure
+            terraform apply -var-file=./env/${ENV}.tfvars --auto-approve
+            terraform fmt
+
+      - name: Push changes automatically!
+        uses: EndBug/add-and-commit@v9
+        if: ${{ github.ref != 'refs/heads/main' }}
+        with:
+          message: '[Boldlinksig]: persist the changes done to tfvars file. image_release value updated'
+          author_name: boldlinksig
+          author_email: boldlinksig@boldlink.io
+          committer_name: boldlinksig
+          committer_email: boldlinksig@boldlink.io 

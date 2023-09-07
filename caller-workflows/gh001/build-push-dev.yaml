@@ -1,0 +1,28 @@
+name: build-push-dev
+
+on:
+  push:
+    tags:
+      - '[0-9].[0-9].[0-9]rc*'
+      - '[0-9].[0-9].[0-9][0-9]rc*'
+      - '[0-9].[0-9][0-9].[0-9]rc*'
+      - '[0-9][0-9].[0-9].[0-9]rc*'
+      - '[0-9].[0-9][0-9].[0-9][0-9]rc*'
+      - '[0-9][0-9].[0-9].[0-9][0-9]rc*'
+      - '[0-9][0-9].[0-9][0-9].[0-9]rc*'
+      - '[0-9][0-9].[0-9][0-9].[0-9][0-9]rc*'
+
+permissions: read-all
+
+jobs:
+  build_push-dev:
+    permissions: 
+      id-token: write
+      contents: write
+    uses: ./.github/workflows/build-push-dev-reusable.yaml
+    with:
+      oidc_role: arn:aws:iam::901512569142:role/c201-github-oidc-role
+      region: eu-west-1
+      terraform_dir: "${GITHUB_WORKSPACE}/terraform/app/eu-west-1/test-api/"
+      ecr_repo_name: test-repo
+    secrets: inherit

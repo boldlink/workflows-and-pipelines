@@ -1,0 +1,147 @@
+name: release
+
+on:
+  workflow_call:
+    inputs:
+      config-name:
+        required: true
+        type: string
+      oidc_role:
+        required: true
+        type: string
+      region:
+        required: true
+        type: string
+      terraform_dir:
+        type: string
+        required: true
+      ecr_repo_name:
+        type: string
+        required: true
+
+env:
+  ENV: 'dev'
+  TF_VER: '0.14.11'    
+
+jobs:
+  release:
+
+    permissions:
+      id-token: write
+      contents: write
+      pull-requests: write
+    runs-on: self-hosted
+    environment: dev
+    steps:
+      - name: Current Year
+        id: year
+        run: echo "year=$(date +'%Y')" >> $GITHUB_OUTPUT
+
+      - uses: actions-ecosystem/action-get-merged-pull-request@v1
+        id: get-merged-pr
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: release-drafter/release-drafter@v5
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        id: create_release
+        with:
+          publish: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+          prerelease: false # Setting this option to true will have the upcoming release marked as a pre-release/ not production ready. By default we want it to remain as false.
+          config-name: ${{ inputs.config-name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/checkout@v3
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        name: checkout repo code 
+        with:
+          ref: ${{ github.event.base_ref }} 
+   
+      - name: Query account ID
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        id: query-account
+        run: |
+          echo "account=$(aws sts get-caller-identity --query "Account" --output text)" >> $GITHUB_OUTPUT
+
+      - name: Docker build
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        id: tag-image
+        run: |
+          aws ecr get-login-password --region ${{ inputs.region }}  | docker login --username AWS --password-stdin ${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com
+          docker build -t ${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ inputs.ecr_repo_name }}:${{ steps.create_release.outputs.tag_name }} .
+          echo "image=${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ inputs.ecr_repo_name }}:${{ steps.create_release.outputs.tag_name }}" >> $GITHUB_OUTPUT
+
+      - name: Run Trivy vulnerability scanner
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: ${{ steps.tag-image.outputs.image }}
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
+      - name: Docker push & tar
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        id: push-image
+        run: |
+          docker push ${{ steps.tag-image.outputs.image }}
+          docker save ${{ steps.tag-image.outputs.image }} > ${{ inputs.ecr_repo_name }}.tar
+
+      - name: Docker Image Asset
+        uses: AButler/upload-release-assets@v2.0
+        with:
+          files: '${{ inputs.ecr_repo_name }}.tar'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          release-tag: ${{ steps.create_release.outputs.name }}
+
+      - name: Configure AWS credentials for dev ENV
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          role-to-assume: ${{ inputs.oidc_role }}
+          aws-region: ${{ inputs.region }}
+
+      - name: Confirm logged in user
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        run: |
+          aws sts get-caller-identity
+
+      - name: setup nodejs
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        uses: actions/setup-node@v3
+        with:
+          node-version: "14"
+  
+      - name: Setup Terraform
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${TF_VER}
+  
+      - name: Terraform apply
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        run: |
+            cd ${{inputs.terraform_dir}}
+            sed -i 's/^image_release = .*/image_release = "${{ steps.create_release.outputs.tag_name }}"/' ./env/${ENV}.tfvars
+            terraform init -backend-config=./env/${ENV}-backend.hcl -reconfigure
+            terraform apply -var-file=./env/${ENV}.tfvars --auto-approve
+            terraform fmt
+
+      - name: create pull request
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        uses: peter-evans/create-pull-request@v4
+        with:
+          token: ${{ secrets.AUTOMATION_TOKEN }}
+          author: boldlinksig <boldlinksig@boldlink.io>
+          committer: boldlinksig <boldlinksig@boldlink.io>
+          commit-message: docker image release updated in dev.tfvars file
+          branch: vars-file-update
+          base: main
+          delete-branch: true
+          title: '[automation] updated image release in dev.tfvars file.'
+          body: 'This an automated PR to update image release in dev.tfvars file'
+          labels: |
+                no-release
