@@ -16,7 +16,7 @@ jobs:
       contents: write
       pull-requests: write
       id-token: write
-    uses: ./.github/workflows/release-reusable.yaml
+    uses: boldlink/workflows-and-pipelines/.github/workflows/release.yaml@main
     with:
       config-name:  workflows/config/rd-config.yaml
       oidc_role: arn:aws:iam::901512569142:role/c201-github-oidc-role
