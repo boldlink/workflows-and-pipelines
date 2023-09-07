@@ -10,7 +10,7 @@ jobs:
     permissions: 
       id-token: write
       contents: write
-    uses: boldlink/workflows-and-pipelines/.github/workflows/deploy-prod.yaml@main
+    uses: boldlink/workflows-and-pipelines/.github/workflows/gh001-deploy-prod.yaml@main
     with:
       oidc_role: arn:aws:iam::402086157955:role/c201-github-oidc-role
       region: eu-west-1

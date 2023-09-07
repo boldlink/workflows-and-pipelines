@@ -12,7 +12,7 @@ jobs:
     permissions:
       contents: write
       pull-requests: write
-    uses: boldlink/workflows-and-pipelines/.github/workflows/pr-labeler.yaml@main
+    uses: boldlink/workflows-and-pipelines/.github/workflows/gh001-pr-labeler.yaml@main
     with:
       configuration-path: .github/workflows/config/prl-config.yaml
     secrets:
