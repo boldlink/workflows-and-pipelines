@@ -1,6 +1,6 @@
 # Docker-Build-Push-Deploy
 
-This folder GitHub workflows that automate the process of Docker build, pushing to ECR registry and deployment to development and production environments in AWS.
+This folder contains GitHub workflows that automate the process of Docker build, pushing to ECR registry and deployment to development and production environments in AWS.
 
 These workflows provide structure, automation, consistency, and control to the software development and deployment process. They enhance collaboration, reduce human errors, and help ensure the reliability and stability of the applications in both development and production environments.
 
