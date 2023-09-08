@@ -49,7 +49,7 @@ Terraform apply: Applies the Terraform configuration, using the terraform apply 
 Push changes automatically: Automatically commits and pushes changes to the repository. It uses the EndBug/add-and-commit action, specifying the commit message, author details, and email.
 
 ### Sample caller workflow:
-
+```
 name: build-push-dev
 
 on:
@@ -71,13 +71,14 @@ jobs:
     permissions: 
       id-token: write
       contents: write
-    uses: ./.github/workflows/build-push-dev-reusable.yaml
+    uses: boldlink/workflows-and-pipelines/.github/workflows/gh001-build-push-dev.yaml@main
     with:
       oidc_role: arn:aws:iam::<insert_dev_account_number>:role/<insert-oidc_role_name>
       region:<insert_aws_region>
       terraform_dir: "${GITHUB_WORKSPACE}/<insert_terraform_directory_path>"
       ecr_repo_name:<insert_ecr_repo_name>
     secrets: inherit
+```
 
 ## release.yaml
 
@@ -127,7 +128,7 @@ Create Pull Request: Creates a pull request automatically to update the image re
 NOTE: The steps above are skipped if the pull request contains the label ‘no-release’
 
 ### Sample caller Workflow:
-
+```
 name: Release
 
 on:
@@ -144,7 +145,7 @@ jobs:
       contents: write
       pull-requests: write
       id-token: write
-    uses: ./.github/workflows/release-reusable.yaml
+    uses: boldlink/workflows-and-pipelines/.github/workflows/gh001-release.yaml@main
     with:
       config-name:  workflows/config/rd-config.yaml
       oidc_role: arn:aws:iam::<insert_dev_account_number>:role/<insert-oidc_role_name>
@@ -152,7 +153,7 @@ jobs:
       terraform_dir: "${GITHUB_WORKSPACE}/<insert_terraform_directory_path>"
       ecr_repo_name:<insert_ecr_repo_name>
     secrets: inherit
-
+```
 
 
 ## deploy-prod.yaml
@@ -190,7 +191,7 @@ Create Pull Request: Creates a pull request automatically to update the image re
 
 
 ### Sample caller workflow:
-
+```
 name: deploy-prod
 
 on:
@@ -203,15 +204,14 @@ jobs:
     permissions: 
       id-token: write
       contents: write
-    uses: ./.github/workflows/deploy-prod-reusable.yaml
+    uses: boldlink/workflows-and-pipelines/.github/workflows/gh001-deploy-prod.yaml@main
     with:
       oidc_role: arn:aws:iam::<insert_dev_account_number>:role/<insert-oidc_role_name>
       region:<insert_aws_region>
       terraform_dir: "${GITHUB_WORKSPACE}/<insert_terraform_directory_path>"
       ecr_repo_name:<insert_ecr_repo_name>
     secrets: inherit
-
-
+```
 
 ## Github Environments
 
