@@ -6,9 +6,7 @@ on:
       configuration-path:
         required: true
         type: string
-    secrets:
-      SLACK_WEBHOOK:
-        required: true
+
 jobs:
   pr-labeler:
     runs-on: ubuntu-latest
@@ -22,13 +20,3 @@ jobs:
           configuration-path: ${{inputs.configuration-path}}            
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Slack Notification failure
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_USERNAME: Boldlinksig
-          SLACK_MESSAGE: ":bell: Job failed in ${{ github.event.repository.name }} repository."
-          SLACK_FOOTER: "Boldlink-SIG ${{ steps.year.outputs.year }}"
-          SLACK_COLOR: ${{ job.status }} 
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

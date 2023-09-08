@@ -21,8 +21,8 @@ jobs:
       contents: write
     uses: boldlink/workflows-and-pipelines/.github/workflows/gh001-build-push-dev.yaml@main
     with:
-      oidc_role: arn:aws:iam::901512569142:role/c201-github-oidc-role
-      region: eu-west-1
-      terraform_dir: "${GITHUB_WORKSPACE}/terraform/app/eu-west-1/test-api/"
-      ecr_repo_name: test-repo
+      oidc_role: <github-oidc-role-arn> # e.g arn:aws:iam::11111222223:role/github-oidc-role
+      region: <region-to deploy-to> # e.g eu-west-1
+      terraform_dir: <directory-containing-terraform-files> #e.g "${GITHUB_WORKSPACE}/terraform/app/eu-west-1/python-api/"
+      ecr_repo_name: <ecr-repository-name>
     secrets: inherit
