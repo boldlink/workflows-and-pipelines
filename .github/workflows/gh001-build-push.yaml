@@ -9,24 +9,16 @@ on:
       region:
         required: true
         type: string
-      terraform_dir:
-        type: string
-        required: true
       ecr_repo_name:
-        type: string
-        required: true
-      environment:
         type: string
         required: true
 
 env:
-  ENV: ${{ input.environment }}
   TF_VER: '0.14.11'
 
 jobs:
   build_push:
     runs-on: self-hosted
-    environment: ${{ input.environment }}
     permissions: 
       id-token: write
       contents: write
