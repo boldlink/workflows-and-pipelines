@@ -33,7 +33,7 @@ jobs:
       - name: Docker build
         id: tag-image
         run: |
-          aws ecr get-login-password --region   | docker login --username AWS --password-stdin ${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com
+          aws ecr get-login-password --region ${{ inputs.region }} | docker login --username AWS --password-stdin ${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com
           docker build -t ${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ inputs.ecr_repo_name }}:${{ github.ref_name }} .
           echo "image=${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ inputs.ecr_repo_name }}:${{ github.ref_name }}" >> $GITHUB_OUTPUT
 
