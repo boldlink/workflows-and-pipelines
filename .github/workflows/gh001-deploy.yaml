@@ -46,7 +46,7 @@ jobs:
             # Get the latest tag name
             latest_tag=$(echo "$tags" | jq -r '.[0].name')
             echo "tag=$latest_tag" >> $GITHUB_OUTPUT
-
+          fi
 
       - name: Display Latest Tag
         run: |
