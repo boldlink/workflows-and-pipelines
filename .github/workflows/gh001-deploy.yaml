@@ -1,4 +1,4 @@
-name: deploy-prod
+name: deploy
 
 on:
   workflow_call:
@@ -12,15 +12,18 @@ on:
       terraform_dir:
         type: string
         required: true
+      environment:
+        type: string
+        required: true
 
 env:
-  ENV: 'prod'
+  ENV: ${{ input.environment }}
   TF_VER: '0.14.11'
 
 jobs:
-  deploy-prod:
+  deploy:
     runs-on: ubuntu-latest
-    environment: prod
+    environment: ${{ input.environment }}
     permissions: 
       id-token: write
       contents: write
@@ -29,18 +32,26 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y jq #sudo yum install -y jq 
 
       - name: Get Latest Release
-        id: get_release
+        id: get_latest_tag
         run: |
-          # Fetch the releases using the GitHub API with authentication
-          releases=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases")
-          # Get the latest release tag name
-          latest_tag=$(echo "$releases" | jq -r '.[0].tag_name')
-          echo "tag=$latest_tag" >> $GITHUB_OUTPUT
+          if [[ "${ENV}" == "prod" ]]; then
+            # Fetch the releases using the GitHub API with authentication
+            releases=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/releases")
+            # Get the latest release tag name
+            latest_tag=$(echo "$releases" | jq -r '.[0].tag_name')
+            echo "tag=$latest_tag" >> $GITHUB_OUTPUT
+          else
+            # Fetch the tags using the GitHub API with authentication
+            tags=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" "https://api.github.com/repos/${{ github.repository }}/tags")
+            # Get the latest tag name
+            latest_tag=$(echo "$tags" | jq -r '.[0].name')
+            echo "tag=$latest_tag" >> $GITHUB_OUTPUT
+
 
       - name: Display Latest Tag
         run: |
           # Access the latest_tag output from the previous step
-          echo "Latest Release Tag: ${{ steps.get_release.outputs.tag }}"
+          echo "Latest Tag: ${{ steps.get_latest_tag.outputs.tag }}"
 
       - uses: actions/checkout@v3
         name: checkout repo code 
@@ -48,7 +59,7 @@ jobs:
           ref: ${{ github.event.base_ref }} 
   
 
-      - name: Configure AWS credentials for prod ENV
+      - name: Configure AWS credentials for ${{ input.environment }} ENV
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ inputs.oidc_role }}
@@ -71,7 +82,7 @@ jobs:
       - name: Terraform apply
         run: |
             cd ${{inputs.terraform_dir}}
-            sed -i 's/^image_release = .*/image_release = "${{ steps.get_release.outputs.tag }}"/' ./env/${ENV}.tfvars
+            sed -i 's/^image_release = .*/image_release = "${{ steps.get_latest_tag.outputs.tag }}"/' ./env/${ENV}.tfvars
             terraform init -backend-config=./env/${ENV}-backend.hcl -reconfigure
             terraform apply -var-file=./env/${ENV}.tfvars --auto-approve
             terraform fmt
@@ -82,12 +93,13 @@ jobs:
           token: ${{ secrets.AUTOMATION_TOKEN }}
           author: boldlinksig <boldlinksig@boldlink.io>
           committer: boldlinksig <boldlinksig@boldlink.io>
-          commit-message: docker image release updated in prod.tfvars file
+          commit-message: docker image release updated in ${ENV}.tfvars file
           branch: vars-file-update
           base: main
           delete-branch: true
-          title: '[automation] updated image release in prod.tfvars file.'
-          body: 'This an automated PR to update image release in prod.tfvars file'
+          title: '[automation] updated image release in ${ENV}.tfvars file.'
+          body: 'This an automated PR to update image release in ${ENV}.tfvars file'
           labels: |
                 no-release
+
           

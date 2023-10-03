@@ -20,7 +20,7 @@ on:
         required: true
 
 env:
-  ENV: 'dev'
+  #ENV: 'dev'
   TF_VER: '0.14.11'    
 
 jobs:
@@ -31,7 +31,7 @@ jobs:
       contents: write
       pull-requests: write
     runs-on: self-hosted
-    environment: dev
+    #environment: dev
     steps:
       - name: Current Year
         id: year
@@ -73,7 +73,7 @@ jobs:
           echo "image=${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ inputs.ecr_repo_name }}:${{ steps.create_release.outputs.tag_name }}" >> $GITHUB_OUTPUT
 
       - name: Run Trivy vulnerability scanner
-        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        #if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ steps.tag-image.outputs.image }}
@@ -96,52 +96,3 @@ jobs:
           files: '${{ inputs.ecr_repo_name }}.tar'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: ${{ steps.create_release.outputs.name }}
-
-      - name: Configure AWS credentials for dev ENV
-        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: ${{ inputs.oidc_role }}
-          aws-region: ${{ inputs.region }}
-
-      - name: Confirm logged in user
-        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
-        run: |
-          aws sts get-caller-identity
-
-      - name: setup nodejs
-        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: "14"
-  
-      - name: Setup Terraform
-        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: ${TF_VER}
-  
-      - name: Terraform apply
-        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
-        run: |
-            cd ${{inputs.terraform_dir}}
-            sed -i 's/^image_release = .*/image_release = "${{ steps.create_release.outputs.tag_name }}"/' ./env/${ENV}.tfvars
-            terraform init -backend-config=./env/${ENV}-backend.hcl -reconfigure
-            terraform apply -var-file=./env/${ENV}.tfvars --auto-approve
-            terraform fmt
-
-      - name: create pull request
-        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
-        uses: peter-evans/create-pull-request@v4
-        with:
-          token: ${{ secrets.AUTOMATION_TOKEN }}
-          author: boldlinksig <boldlinksig@boldlink.io>
-          committer: boldlinksig <boldlinksig@boldlink.io>
-          commit-message: docker image release updated in dev.tfvars file
-          branch: vars-file-update
-          base: main
-          delete-branch: true
-          title: '[automation] updated image release in dev.tfvars file.'
-          body: 'This an automated PR to update image release in dev.tfvars file'
-          labels: |
-                no-release
