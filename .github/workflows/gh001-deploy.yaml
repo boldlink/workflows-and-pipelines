@@ -97,8 +97,8 @@ jobs:
           branch: vars-file-update
           base: main
           delete-branch: true
-          title: '[automation] updated image release in ${ENV}.tfvars file.'
-          body: 'This an automated PR to update image release in ${ENV}.tfvars file'
+          title: '[automation] updated image release in tfvars file.'
+          body: 'This an automated PR to update image release in tfvars file'
           labels: |
                 no-release
 
