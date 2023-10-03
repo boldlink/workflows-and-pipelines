@@ -20,7 +20,6 @@ on:
         required: true
 
 env:
-  #ENV: 'dev'
   TF_VER: '0.14.11'    
 
 jobs:
@@ -31,7 +30,6 @@ jobs:
       contents: write
       pull-requests: write
     runs-on: self-hosted
-    #environment: dev
     steps:
       - name: Current Year
         id: year
