@@ -59,7 +59,7 @@ jobs:
           ref: ${{ github.event.base_ref }} 
   
 
-      - name: Configure AWS credentials for ${{ input.environment }} ENV
+      - name: Configure AWS credentials for ${{ inputs.environment }} ENV
         uses: aws-actions/configure-aws-credentials@v2
         with:
           role-to-assume: ${{ inputs.oidc_role }}
