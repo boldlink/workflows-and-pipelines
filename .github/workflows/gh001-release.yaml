@@ -71,7 +71,7 @@ jobs:
           echo "image=${{ steps.query-account.outputs.account }}.dkr.ecr.${{ inputs.region }}.amazonaws.com/${{ inputs.ecr_repo_name }}:${{ steps.create_release.outputs.tag_name }}" >> $GITHUB_OUTPUT
 
       - name: Run Trivy vulnerability scanner
-        #if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: ${{ steps.tag-image.outputs.image }}
@@ -89,6 +89,7 @@ jobs:
           docker save ${{ steps.tag-image.outputs.image }} > ${{ inputs.ecr_repo_name }}.tar
 
       - name: Docker Image Asset
+        if: ${{ !contains(steps.get-merged-pr.outputs.labels, 'no-release') }}
         uses: AButler/upload-release-assets@v2.0
         with:
           files: '${{ inputs.ecr_repo_name }}.tar'
