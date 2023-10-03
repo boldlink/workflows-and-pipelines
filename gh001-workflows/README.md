@@ -13,8 +13,11 @@ It's caller workflow should be triggered by pushing a tag that contains `rc*` su
 Why create a workflow that automates docker build and push process?
 
 Automation: By creating a workflow that automate the process of building and publishing Docker images to AWS ECR it eliminates the need for manual intervention and reduces the chances of errors.
+
 Consistency: With this workflow, you can define a standardized build process, ensuring that every Docker image follows the same steps and configurations. This helps maintain consistency across your application deployments.
+
 Versioning: these workflows allow you to track and manage different versions of your Docker images, making it easier to roll back to a previous version if needed.
+
 Scalability: As the project grows, having an automated workflow for building and publishing Docker images simplifies the process and allows you to scale your infrastructure without manual bottlenecks.
 
 Inputs:
@@ -24,7 +27,7 @@ Inputs:
 
 Make sure that these inputs are provided in the caller workflow.
 
-Workflow steps:
+### Workflow steps:
 
 Checkout repo code: Checks out the repository code using the actions/checkout action. The ref parameter specifies the branch to check out.
 
@@ -78,7 +81,8 @@ Inputs:
 - terraform_dir (required): The directory path of the Terraform files.
 - environment: <environment> #e.g dev
 
-Steps:
+### Workflow Steps:
+
 Install jq: Installs the jq utility using the sudo yum install command to process JSON data in step 2.
 
 Get Latest tag: Retrieves the latest tag name from the GitHub repository using the GitHub API. It stores the tag name in the $GITHUB_OUTPUT environment variable.
