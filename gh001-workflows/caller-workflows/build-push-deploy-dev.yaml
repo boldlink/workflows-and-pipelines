@@ -8,7 +8,7 @@ on:
 permissions: read-all
 
 jobs:
-  build_push:
+  build-push:
     permissions: 
       id-token: write
       contents: write
@@ -19,6 +19,7 @@ jobs:
     #secrets: inherit
 
   deploy-dev:
+    needs: build-push
     permissions: 
       id-token: write
       contents: write
