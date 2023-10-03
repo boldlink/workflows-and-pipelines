@@ -17,13 +17,13 @@ on:
         required: true
 
 env:
-  ENV: ${{ input.environment }}
+  ENV: ${{ inputs.environment }}
   TF_VER: '0.14.11'
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    environment: ${{ input.environment }}
+    environment: ${{ inputs.environment }}
     permissions: 
       id-token: write
       contents: write
