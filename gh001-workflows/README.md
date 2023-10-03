@@ -1,4 +1,4 @@
-# Docker Build, Push to ECR and Deploy Workflows
+# Workflows to Build Docker images, Push to ECR and Deploy to Environments in AWS 
 
 This folder contains GitHub workflows that automate the process of Docker build, pushing to ECR registry and deployment to environments in AWS.
 
