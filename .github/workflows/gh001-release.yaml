@@ -18,7 +18,6 @@ env:
 
 jobs:
   release:
-
     permissions:
       id-token: write
       contents: write
