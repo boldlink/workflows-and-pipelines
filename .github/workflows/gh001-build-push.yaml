@@ -1,4 +1,4 @@
-name: build-push-dev
+name: build-push
 
 on:
   workflow_call:
@@ -62,41 +62,3 @@ jobs:
         id: push-image
         run: |
           docker push ${{ steps.tag-image.outputs.image }}
-
-      - name: Configure AWS credentials for dev ENV
-        uses: aws-actions/configure-aws-credentials@v2
-        with:
-          role-to-assume: ${{ inputs.oidc_role }}
-          aws-region: ${{ inputs.region }}
-
-      - name: Confirm logged in user
-        run: |
-          aws sts get-caller-identity
-
-      - name: setup nodejs
-        uses: actions/setup-node@v3
-        with:
-          node-version: "14"
-  
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: ${TF_VER}
-  
-      - name: Terraform apply
-        run: |
-            cd ${{inputs.terraform_dir}}
-            sed -i 's/^image_release = .*/image_release = "${{ github.ref_name }}"/' ./env/${ENV}.tfvars
-            terraform init -backend-config=./env/${ENV}-backend.hcl -reconfigure
-            terraform apply -var-file=./env/${ENV}.tfvars --auto-approve
-            terraform fmt
-
-      - name: Push changes automatically!
-        uses: EndBug/add-and-commit@v9
-        if: ${{ github.ref != 'refs/heads/main' }}
-        with:
-          message: '[Boldlinksig]: persist the changes done to tfvars file. image_release value updated'
-          author_name: boldlinksig
-          author_email: boldlinksig@boldlink.io
-          committer_name: boldlinksig
-          committer_email: boldlinksig@boldlink.io 
