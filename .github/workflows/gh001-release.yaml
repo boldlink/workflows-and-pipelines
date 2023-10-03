@@ -6,15 +6,9 @@ on:
       config-name:
         required: true
         type: string
-      oidc_role:
-        required: true
-        type: string
       region:
         required: true
         type: string
-      terraform_dir:
-        type: string
-        required: true
       ecr_repo_name:
         type: string
         required: true

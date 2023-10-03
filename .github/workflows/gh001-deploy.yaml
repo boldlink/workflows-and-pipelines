@@ -31,7 +31,7 @@ jobs:
       - name: Install jq
         run: sudo apt-get update && sudo apt-get install -y jq #sudo yum install -y jq 
 
-      - name: Get Latest Release
+      - name: Get Latest tag
         id: get_latest_tag
         run: |
           if [[ "${ENV}" == "prod" ]]; then
