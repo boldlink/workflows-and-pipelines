@@ -93,7 +93,7 @@ jobs:
           token: ${{ secrets.AUTOMATION_TOKEN }}
           author: boldlinksig <boldlinksig@boldlink.io>
           committer: boldlinksig <boldlinksig@boldlink.io>
-          commit-message: docker image release updated in ${ENV}.tfvars file
+          commit-message: docker image release updated tfvars file
           branch: vars-file-update
           base: main
           delete-branch: true
