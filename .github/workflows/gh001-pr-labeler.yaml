@@ -11,10 +11,6 @@ jobs:
   pr-labeler:
     runs-on: ubuntu-latest
     steps:
-      - name: Current Year
-        id: year
-        run: echo "year=$(date +'%Y')" >> $GITHUB_OUTPUT
-
       - uses: TimonVS/pr-labeler-action@v3
         with:
           configuration-path: ${{inputs.configuration-path}}            

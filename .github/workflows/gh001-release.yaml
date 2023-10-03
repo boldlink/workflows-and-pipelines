@@ -25,10 +25,6 @@ jobs:
       pull-requests: write
     runs-on: self-hosted
     steps:
-      - name: Current Year
-        id: year
-        run: echo "year=$(date +'%Y')" >> $GITHUB_OUTPUT
-
       - uses: actions-ecosystem/action-get-merged-pull-request@v1
         id: get-merged-pr
         with:

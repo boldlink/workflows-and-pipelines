@@ -8,7 +8,7 @@ These workflows provide structure, automation, consistency, and control to the s
 
 This workflow builds a Docker image and publishes it to an AWS ECR repository.  The reusable is triggered by a workflow call event and requires specific input parameters. This workflow runs on a self-hosted runner.
 
-It's caller workflow should we set to be triggered by pushing a tag that contains `rc*` suffix to GitHub.
+It's caller workflow should be triggered by pushing a tag that contains `rc*` suffix to GitHub.
 
 Why create a workflow that automates docker build and push process?
 
@@ -18,8 +18,9 @@ Versioning: these workflows allow you to track and manage different versions of 
 Scalability: As the project grows, having an automated workflow for building and publishing Docker images simplifies the process and allows you to scale your infrastructure without manual bottlenecks.
 
 Inputs:
-region (required): The AWS region where the ECR repository is located.
-ecr_repo_name (required): The name of the ECR repository.
+
+- region (required): The AWS region where the ECR repository is located.
+- ecr_repo_name (required): The name of the ECR repository.
 
 Make sure that these inputs are provided in the caller workflow.
 
@@ -61,7 +62,7 @@ jobs:
 
 This workflow automates the deployment of the application to AWS environments using Terraform. It is triggered by a workflow call event and requires specific input parameters. The workflow runs on a self-hosted runner
 
-It’s caller workflow can be manually triggered using the "workflow_dispatch" event if deployment is done to `prod` environment. If the deployment is done to any other environment, the caller workflow should we set to be triggered by pushing a tag that contains `rc*` suffix to GitHub 
+It’s caller workflow can be manually triggered using the "workflow_dispatch" event if deployment is done to `prod` environment. If the deployment is done to any other environment, the caller workflow should be triggered by pushing a tag that contains `rc*` suffix to GitHub 
 
 Why create a workflow that deploys to various AWS environments?
 
@@ -71,10 +72,11 @@ Isolated Environment: Deploying to a development account ensures that the releas
 
 
 Inputs:
-oidc_role (required): The OIDC role to assume for configuring AWS credentials in AWS account.
-region (required): The AWS region where the Terraform resources are deployed.
-terraform_dir (required): The directory path of the Terraform files.
-environment: <environment> #e.g dev
+
+- oidc_role (required): The OIDC role to assume for configuring AWS credentials in AWS account.
+- region (required): The AWS region where the Terraform resources are deployed.
+- terraform_dir (required): The directory path of the Terraform files.
+- environment: <environment> #e.g dev
 
 Steps:
 Install jq: Installs the jq utility using the sudo yum install command to process JSON data in step 2.
@@ -153,7 +155,7 @@ jobs:
 
 ```
 
-## release.yaml
+## gh001-release.yaml
 
 This workflow automates the release process by creating a github release, building and pushing a Docker image to ecr and performing vulnerability scanning. It is triggered by a workflow call event and requires specific input parameters. The workflow runs on a self-hosted runner.
 
@@ -164,9 +166,10 @@ Why create a workflow that automates version release?
 Release Management: By creating a workflow specifically for creating releases, we establish a systematic approach to managing and tracking different versions of your software. This helps in maintaining an organized and structured development process.
 
 Inputs:
-Config-name (required): The name of the configuration file for release-drafter/release-drafter@v5 action.
-Region (required): The AWS region where the ECR repository is located.
-Ecr_repo_name (required): The name of the ECR repository.
+
+- Config-name (required): The name of the configuration file for release-drafter/release-drafter@v5 action.
+- Region (required): The AWS region where the ECR repository is located.
+- Ecr_repo_name (required): The name of the ECR repository.
 
 ### Workflow Steps:
 
@@ -210,6 +213,34 @@ jobs:
       region:<insert_aws_region>
       ecr_repo_name:<insert_ecr_repo_name>
     secrets: inherit
+```
+
+## gh001-pr-labeler
+This reusable workflow automatically labels pull requests based on a configuration file.
+
+Inputs:
+
+- configuration-path (required): The path to the configuration file.
+
+### Sample caller workflow:
+```
+name: PR Labeler
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+
+permissions: read-all
+
+jobs:
+  pr-labeler:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: boldlink/workflows-and-pipelines/.github/workflows/gh001-pr-labeler.yaml@main
+    with:
+      configuration-path: .github/workflows/config/prl-config.yaml
 ```
 
 ## Github Environments
