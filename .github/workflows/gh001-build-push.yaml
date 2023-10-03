@@ -3,9 +3,6 @@ name: build-push
 on:
   workflow_call:
     inputs:
-      oidc_role:
-        required: true
-        type: string
       region:
         required: true
         type: string
