@@ -8,7 +8,7 @@ These workflows provide structure, automation, consistency, and control to the s
 
 This workflow builds a Docker image and publishes it to an AWS ECR repository.  The reusable is triggered by a workflow call event and requires specific input parameters. This workflow runs on a self-hosted runner.
 
-It's caller workflow should be triggered by pushing a tag that contains `rc*` suffix to GitHub.
+It's caller workflow should be triggered by pushing a tag that conforms to the following regex format - `[0-9]+.[0-9]+.[0-9]+rc[0-9]+` to Github
 
 Why create a workflow that automates docker build and push process?
 
@@ -46,7 +46,7 @@ name: build-push
 on:
   push:
     tags:
-      - '*.*.*rc*'
+      - '[0-9]+.[0-9]+.[0-9]+rc[0-9]+'
 
 permissions: read-all
 
@@ -65,7 +65,7 @@ jobs:
 
 This workflow automates the deployment of the application to AWS environments using Terraform. It is triggered by a workflow call event and requires specific input parameters. The workflow runs on a self-hosted runner
 
-It’s caller workflow can be manually triggered using the "workflow_dispatch" event if deployment is done to `prod` environment. If the deployment is done to any other environment, the caller workflow should be triggered by pushing a tag that contains `rc*` suffix to GitHub 
+It’s caller workflow can be manually triggered using the "workflow_dispatch" event if deployment is done to `prod` environment. If the deployment is done to any other environment, the caller workflow should be triggered by pushing a tag that conforms to the following regex format - `[0-9]+.[0-9]+.[0-9]+rc[0-9]+` to GitHub 
 
 Why create a workflow that deploys to various AWS environments?
 
@@ -130,7 +130,7 @@ name: build-push-deploy-dev
 on:
   push:
     tags:
-      - '*.*.*rc*'
+      - '[0-9]+.[0-9]+.[0-9]+rc[0-9]+'
 
 permissions: read-all
 
