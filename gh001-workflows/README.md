@@ -6,7 +6,7 @@ These workflows provide structure, automation, consistency, and control to the s
 
 ## gh001-build-push.yaml
 
-This workflow builds a Docker image and publishes it to an AWS ECR repository.  The reusable is triggered by a workflow call event and requires specific input parameters. This workflow runs on a self-hosted runner.
+This workflow builds a Docker image and publishes it to an AWS ECR repository.  The reusable workflow is triggered by a workflow call event and requires specific input parameters. This workflow runs on a self-hosted runner.
 
 It's caller workflow should be triggered by pushing a tag that conforms to the following regex format - `[0-9]+.[0-9]+.[0-9]+rc[0-9]+` to Github
 
@@ -25,7 +25,7 @@ Inputs:
 - region (required): The AWS region where the ECR repository is located.
 - ecr_repo_name (required): The name of the ECR repository.
 
-Make sure that these inputs are provided in the caller workflow.
+Make sure these inputs are provided in the caller workflow.
 
 ### Workflow steps:
 
@@ -39,7 +39,7 @@ Run Trivy vulnerability scanner: Uses the aquasecurity/trivy-action to scan the 
 
 Docker push: Pushes the Docker image to the ECR repository using the docker push command.
 
-### Sample caller workflow:
+### Example caller workflow:
 ```
 name: build-push
 
@@ -63,7 +63,7 @@ jobs:
 
 ## gh001-deploy.yaml
 
-This workflow automates the deployment of the application to AWS environments using Terraform. It is triggered by a workflow call event and requires specific input parameters. The workflow runs on a self-hosted runner
+This workflow automates the deployment of the application to AWS environments using Terraform. It is triggered by a workflow call event and requires specific input parameters. The workflow runs on a github hosted runner.
 
 It’s caller workflow can be manually triggered using the "workflow_dispatch" event if deployment is done to `prod` environment. If the deployment is done to any other environment, the caller workflow should be triggered by pushing a tag that conforms to the following regex format - `[0-9]+.[0-9]+.[0-9]+rc[0-9]+` to GitHub 
 
@@ -99,7 +99,7 @@ Terraform Apply: Applies the Terraform configuration. It changes the image_relea
 Create Pull Request: Creates a pull request automatically to update the image release in the `.tfvars` file. It uses the peter-evans/create-pull-request action, specifying parameters such as the token, author details, commit message, branch name, base branch, and PR title and body.
 
 
-### Sample caller workflow:
+### Example caller workflow:
 ```
 name: deploy
 
@@ -191,9 +191,9 @@ Run Trivy Vulnerability Scanner: Uses the aquasecurity/trivy-action to scan the 
 
 Docker Push: Pushes the Docker image to the ECR repository using the docker push command.  
 
-NOTE: The steps above are skipped if the pull request contains the label ‘no-release’
+**NOTE**: The steps above are skipped if the pull request contains the label ‘no-release’
 
-### Sample caller Workflow:
+### Example caller Workflow:
 ```
 name: Release
 
@@ -226,7 +226,7 @@ Inputs:
 
 - configuration-path (required): The path to the configuration file.
 
-### Sample caller workflow:
+### Example caller workflow:
 ```
 name: PR Labeler
 on:
@@ -255,3 +255,4 @@ You can configure environments with protection rules and secrets. When a workflo
 
 For more information on how to create and delete a GitHub environment, see here: https://docs.github.com/en/actions/deployment/targeting-different-environments/using-environments-for-deployment
 
+#### BOLDLink-SIG 2024
