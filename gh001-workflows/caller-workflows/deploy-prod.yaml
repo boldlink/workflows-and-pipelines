@@ -1,0 +1,18 @@
+name: deploy-prod
+
+on:
+  workflow_dispatch:
+
+permissions: read-all
+
+jobs:
+  deploy-prod:
+    permissions: 
+      id-token: write
+      contents: write
+    uses: boldlink/workflows-and-pipelines/.github/workflows/gh001-deploy.yaml@main
+    with:
+      oidc_role: <github-oidc-role-arn> # e.g arn:aws:iam::11111222223:role/github-oidc-role
+      region: <region-to deploy-to> # e.g eu-west-1
+      terraform_dir: <directory-containing-terraform-files> #e.g "${GITHUB_WORKSPACE}/terraform/app/eu-west-1/python-api/"
+    secrets: inherit

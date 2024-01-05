@@ -1,0 +1,17 @@
+name: PR Labeler
+on:
+  pull_request:
+    types:
+      - opened
+      - reopened
+
+permissions: read-all
+
+jobs:
+  pr-labeler:
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: boldlink/workflows-and-pipelines/.github/workflows/gh001-pr-labeler.yaml@main
+    with:
+      configuration-path: .github/workflows/config/prl-config.yaml
