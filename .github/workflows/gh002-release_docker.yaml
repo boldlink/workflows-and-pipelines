@@ -1,0 +1,98 @@
+name: Release and Deploy to dev
+
+on:
+  workflow_run:
+    workflows:
+      - Release
+    types:
+      - completed
+
+permissions:
+  id-token: write
+  contents: write
+
+env:
+  ECR_REPOSITORY: <aws_ecr_repository>
+  TF_VERSION: 0.14.11
+  AWS_REGION: <aws_region>
+  OIDC_ROLE: arn:aws:iam::<aws_account_ID>:role/<name_of_iam_role>
+  TF_DIR: ./terraform #path to directory containing terraform files
+  SRC_DIR: ./src #path to directory containing Dockerfile
+  ENV: prod #environment to persist image
+  DEPLOY_ENV: dev
+
+jobs:
+  docker-release:
+    if: ${{ github.event.workflow_run.conclusion == 'success'}}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials.
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.OIDC_ROLE }}
+
+      - name: Log in to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Get latest release
+        id: release
+        uses: pozetroninc/github-action-get-latest-release@master
+        with:
+          repository: ${{ github.repository }}
+          token: ${{ secrets.AUTOMATION_TOKEN }}
+
+      - name: Tag image for Amazon ECR
+        id: ecr-image
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: ${{ env.ECR_REPOSITORY }}
+          IMAGE_TAG: ${{ steps.release.outputs.release }}
+        run: |
+          echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: ${{ env.SRC_DIR }}
+          load: true # make the image available for the workflow
+          tags: ${{ steps.ecr-image.outputs.image }}
+          cache-from: type=gha # use the GitHub Cache API
+          cache-to: type=gha,mode=max
+
+      - name: Push Docker image to ECR with rc tag.
+        run: |
+          docker push ${{ steps.ecr-image.outputs.image }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Deploy image to AWS ECS using Terraform
+        run: |
+          cd ${{ env.TF_DIR }}
+          sed -E -i '/^image\s+=\s+".*"/ s~(image\s+=\s+)"[^"]*"~\1"${{ steps.ecr-image.outputs.image }}"~' ./env/${ENV}.tfvars
+          terraform init -backend-config=./env/${DEPLOY_ENV}-backend.hcl -reconfigure
+          terraform apply -var-file=./env/${ENV}.tfvars --auto-approve
+
+      - name: Create PR to persist image to file
+        uses: peter-evans/create-pull-request@v5
+        with:
+          token: ${{ secrets.AUTOMATION_TOKEN }}
+          author: boldlinksig <boldlinksig@boldlink.io>
+          committer: boldlinksig <boldlinksig@boldlink.io>
+          commit-message: Persist release tag on image
+          branch: docker-release
+          base: main
+          delete-branch: true
+          title: 'feat: persist image tag for the release'
+          body: 'automated PR to persist tag'
+          labels: docker-automation

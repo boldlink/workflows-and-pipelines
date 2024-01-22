@@ -1,0 +1,41 @@
+name: Deploy to prod
+
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: write
+
+env:
+  ECR_REPOSITORY: <name_of_ecr_repository>
+  TF_VERSION: 0.14.11
+  AWS_REGION: <aws_region>
+  OIDC_ROLE: arn:aws:iam::<provide_account_ID_here>:role/<name_of_aws_iam_role>
+  TF_DIR: ./terraform #path to directory containing terraform files
+  SRC_DIR: ./src #path to directory containing Dockerfile
+  ENV: prod #environment to deploy the application to
+
+jobs:
+  production-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Configure AWS credentials.
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-region: ${{ env.AWS_REGION }}
+          role-to-assume: ${{ env.OIDC_ROLE }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Deploy image to AWS ECS using Terraform
+        run: |
+          cd ${{ env.TF_DIR }}
+          terraform init -backend-config=./env/${ENV}-backend.hcl -reconfigure
+          terraform apply -var-file=./env/${ENV}.tfvars --auto-approve

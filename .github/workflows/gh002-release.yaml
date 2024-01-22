@@ -1,0 +1,21 @@
+name: Release
+
+on:
+  pull_request:
+    types:
+      - closed
+
+permissions: read-all
+
+jobs:
+  release:
+    if: ${{ github.event.pull_request.labels[0].name != 'docker-automation' && github.event.pull_request.merged == true }}
+    permissions:
+      contents: write
+      pull-requests: write
+    uses: boldlink/terraform-module-support/.github/workflows/release.yaml@main
+    with:
+      config-name: workflows/config/rd-config.yaml
+    secrets:
+      AUTOMATION_TOKEN: ${{ secrets.AUTOMATION_TOKEN }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
